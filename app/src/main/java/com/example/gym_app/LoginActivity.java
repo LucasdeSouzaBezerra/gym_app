@@ -2,54 +2,55 @@ package com.example.gym_app;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.widget.Button;
+import android.view.View;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
-import android.util.Log;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.gym_app.database.DatabaseHelper;
 
 public class LoginActivity extends AppCompatActivity {
 
-    private EditText email, password;
-    private DatabaseHelper db;
+    private EditText editEmail, editPassword;
+    private DatabaseHelper dbHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_login);
+        setContentView(R.layout.activity_login);  // Certifique-se de ter um layout correspondente
 
-        db = new DatabaseHelper(this);
+        // Inicializando os campos e o DatabaseHelper
+        editEmail = findViewById(R.id.editTextEmail);  // Verifique o ID no layout
+        editPassword = findViewById(R.id.editTextPassword);  // Verifique o ID no layout
+        dbHelper = new DatabaseHelper(this);
+    }
 
-        email = findViewById(R.id.editTextEmail);
-        password = findViewById(R.id.editTextPassword);
-        Button buttonLogin = findViewById(R.id.buttonLogin);
-        TextView textViewRegister = findViewById(R.id.textViewRegister);
+    // Método de login
+    public void onLogin(View view) {
+        String email = editEmail.getText().toString();
+        String password = editPassword.getText().toString();
 
-        buttonLogin.setOnClickListener(v -> {
-            String userEmail = email.getText().toString().trim();
-            String userPassword = password.getText().toString().trim();
+        if (email.isEmpty() || password.isEmpty()) {
+            Toast.makeText(this, "Por favor, preencha todos os campos.", Toast.LENGTH_SHORT).show();
+        } else {
+            // Verificando o login (com base no tipo de usuário, seja profissional ou cliente)
+            boolean loginValidoProfissional = dbHelper.checkProfissional(email, password);
+            boolean loginValidoCliente = dbHelper.checkCliente(email, password);
 
-            if (userEmail.isEmpty() || userPassword.isEmpty()) {
-                Toast.makeText(this, "Por favor, preencha todos os campos", Toast.LENGTH_SHORT).show();
-                Log.d("LoginActivity", "Campos vazios");
-            } else if (!db.checkEmailExistsProfissional(userEmail)) {
-                Toast.makeText(this, "E-mail não registrado", Toast.LENGTH_SHORT).show();
-                Log.d("LoginActivity", "E-mail não registrado: " + userEmail);
-            } else if (db.checkProfissional(userEmail, userPassword)) {
-                Toast.makeText(this, "Login bem-sucedido", Toast.LENGTH_SHORT).show();
-                Log.d("LoginActivity", "Login bem-sucedido: " + userEmail);
-                // Redirecionar para a tela principal dos profissionais
+            if (loginValidoProfissional || loginValidoCliente) {
+                // Se o login for válido, redireciona para a tela de monitoramento
+                navigateToMonitoramento();
             } else {
-                Toast.makeText(this, "Senha incorreta", Toast.LENGTH_SHORT).show();
-                Log.d("LoginActivity", "Senha incorreta para: " + userEmail);
+                // Caso o login falhe
+                Toast.makeText(this, "Login ou senha inválidos.", Toast.LENGTH_SHORT).show();
             }
-        });
+        }
+    }
 
-        textViewRegister.setOnClickListener(v -> {
-            Intent intent = new Intent(LoginActivity.this, RegisterActivity.class);
-            startActivity(intent);
-        });
+    // Função para navegar para a tela de monitoramento
+    private void navigateToMonitoramento() {
+        // Criação da Intent para a tela de Monitoramento
+        Intent intent = new Intent(LoginActivity.this, MonitoramentoActivity.class);
+        startActivity(intent);  // Inicia a nova Activity
+        finish();  // Finaliza a tela de login para não voltar a ela ao pressionar "voltar"
     }
 }
